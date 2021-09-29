@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>BottomPanelTwo.qml</file>
+        <file>Detail.qml</file>
+        <file>History.qml</file>
+        <file>Login.qml</file>
+        <file>Menu.qml</file>
+        <file>MenuTopTabPanel.qml</file>
+        <file>qtquickcontrols2.conf</file>
+        <file>Signup.qml</file>
+        <file>TopTabPanel.qml</file>
+        <file>Trip.qml</file>
+        <file>About.qml</file>
+        <file>SplashScreen.qml</file>
+        <file>script.mjs</file>
+    </qresource>
+</RCC>
