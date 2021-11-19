@@ -199,6 +199,7 @@ Page {
                 implicitHeight: parent.height * 0.9
                 implicitWidth: parent.height * 0.02
                 radius: width * 0.5
+                opacity: 0.5
                 color: ((1 % pos) === 0) ? "#FFFFFF" : (((2 % pos) === 0) || ((pos % 4) === 2) || ((3 % pos) === 0) || ((pos % 4) === 3))  ? "#000000" : "#FFFFFF"
             }
         }

@@ -73,8 +73,32 @@ ApplicationWindow {
 
     StackView {
         id: stackView
-        initialItem: splash
         anchors.fill: parent
+        initialItem: {
+            var date = new Date()
+            var now = Number(date.getTime())
+            var exp = Number(settings.value("expires", 0))
+            console.log("Expires: ", exp)
+            console.log("Now: ", now)
+            var sub = now - exp
+            console.log("Sub: ", sub)
+            if (sub < 0) {
+                console.log("T")
+                stackView.replace(splash, trip)
+                stackView.pop(splash)
+                stackView.initialItem = trip
+                splash.visible = false
+                trip.visible = true
+                topPanel.visible = true
+                bottomPanel.visible = true
+                backgroundTimer.running = true
+            }
+            if (sub >= 0) {
+                console.log("S")
+                splashTimer.running = true
+                return splash
+            }
+        }
     }
 
     SplashScreen {
@@ -152,8 +176,9 @@ ApplicationWindow {
     }
 
     Timer {
+        id: splashTimer
         interval: 5000
-        running: true
+        running: false
         repeat: false
         onTriggered: {
             stackView.replace(splash, login)
@@ -177,8 +202,9 @@ ApplicationWindow {
         request('http://dcraz8317.pythonanywhere.com/login?email='+par+'&password='+val+'&type=driver', function (o) {
             // log the json response
             var myJsonObject = JSON.parse(o.responseText)
-            console.log(myJsonObject.status)
+            console.log(myJsonObject.expires)
             if (myJsonObject.status) {
+                settings.setValue("expires", myJsonObject.expires)
                 stackView.replace(login, trip)
                 stackView.pop(login)
                 stackView.initialItem = trip
@@ -198,6 +224,7 @@ ApplicationWindow {
             console.log(myJsonObject.status)
             if (myJsonObject.status) {
                 settings.name = myJsonObject.id
+                settings.setValue(uid, settings.name)
                 signup.visible = false
                 stackView.pop()
                 login.visible = true
@@ -213,10 +240,11 @@ ApplicationWindow {
             // log the json response
             var myJsonObject = JSON.parse(o.responseText)
             console.log(myJsonObject.status)
+            var timeUnit = "secs"
             if (!myJsonObject.status) {
                 history.modelA.clear()
-                trip.lapsedDValue = "-.- km"
-                trip.remainingDValue = "-.- km"
+                trip.lapsedDValue = "-.-"
+                trip.remainingDValue = "-.-"
                 trip.lapsedTValue = "--:--"
                 trip.remainingTValue = "--:--"
                 for (var i = 0; i < myJsonObject.trip.length; i++) {
@@ -226,10 +254,18 @@ ApplicationWindow {
             }
             if (myJsonObject.status) {
                 history.modelA.clear()
+                var lapsedTUnit = "mins"
+                var remainingTUnit = "mins"
+                if ((myJsonObject.timeL / 60) <= 0) {
+                    lapsedTUnit = "secs"
+                }
+                if ((myJsonObject.time / 60) <= 0) {
+                    remainingTUnit = "secs"
+                }
                 trip.lapsedDValue = String(formatSeconds(Math.floor(myJsonObject.distanceL / 1000))) + "." + String(formatSeconds(myJsonObject.distanceL % 1000)) + String(" km")
                 trip.remainingDValue = String(formatSeconds(Math.floor(myJsonObject.distance / 1000))) + "." + String(formatSeconds(myJsonObject.distance % 1000)) + String(" km")
-                trip.lapsedTValue = String(formatSeconds(Math.floor(myJsonObject.timeL / 60))) + String(":") + String(formatSeconds(myJsonObject.timeL))
-                trip.remainingTValue = String(formatSeconds(Math.floor(myJsonObject.time / 60))) + String(":") + String(formatSeconds(myJsonObject.time))
+                trip.lapsedTValue = String(formatSeconds(Math.floor(myJsonObject.timeL / 60))) + String(":") + String(formatSeconds(myJsonObject.timeL)) + String(" ") + String(lapsedTUnit)
+                trip.remainingTValue = String(formatSeconds(Math.floor(myJsonObject.time / 60))) + String(":") + String(formatSeconds(myJsonObject.time)) + String(" ") + String(remainingTUnit)
                 for (var l = 0; l < myJsonObject.trip.length; l++) {
                     history.modelA.append({"tripID": String(myJsonObject.trip[l]["pos"]), "destination": myJsonObject.trip[l]["destination"], "source": myJsonObject.trip[l]["source"], "pos": myJsonObject.trip[l]["pos"], "departure": myJsonObject.trip[l]["departure"], "arrival": myJsonObject.trip[l]["arrival"]})
                 }
@@ -265,9 +301,5 @@ ApplicationWindow {
         })(xhr);
         xhr.open('GET', url, true);
         xhr.send('');
-    }
-
-    Component.onCompleted: {
-        uid = settings.name
     }
 }

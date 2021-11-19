@@ -28,7 +28,7 @@ Page {
         anchors.leftMargin: parent.width * 0.066
         myWidth: parent.width * 0.4
         myHeight: parent.height * 0.2
-        myTitle: "Duration Lapsed"
+        myTitle: "Distance Covered"
         myValue: "-.- km"
         myColor: "#783090"
         myTextColor: "#ffffff"
@@ -56,7 +56,7 @@ Page {
         anchors.leftMargin: parent.width * 0.066
         myWidth: parent.width * 0.4
         myHeight: parent.height * 0.2
-        myTitle: "Duration Remaining"
+        myTitle: "Distance Remaining"
         myValue: "-.- km"
         myColor: "#ffffff"
         myTextColor: "#000000"
