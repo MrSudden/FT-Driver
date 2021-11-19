@@ -76,25 +76,19 @@ ApplicationWindow {
         anchors.fill: parent
         initialItem: {
             var date = new Date()
-            var now = Number(date.getTime())
+            var now = Number(date.getTime()/1000)
             var exp = Number(settings.value("expires", 0))
-            console.log("Expires: ", exp)
-            console.log("Now: ", now)
             var sub = now - exp
-            console.log("Sub: ", sub)
             if (sub < 0) {
-                console.log("T")
-                stackView.replace(splash, trip)
-                stackView.pop(splash)
                 stackView.initialItem = trip
                 splash.visible = false
                 trip.visible = true
                 topPanel.visible = true
                 bottomPanel.visible = true
                 backgroundTimer.running = true
+                console.log("Depth: ", stackView.depth)
             }
             if (sub >= 0) {
-                console.log("S")
                 splashTimer.running = true
                 return splash
             }
