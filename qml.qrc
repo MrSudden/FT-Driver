@@ -14,5 +14,6 @@
         <file>About.qml</file>
         <file>SplashScreen.qml</file>
         <file>script.mjs</file>
+        <file>Auth.qml</file>
     </qresource>
 </RCC>

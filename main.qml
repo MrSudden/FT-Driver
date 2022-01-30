@@ -11,8 +11,8 @@ ApplicationWindow {
     height: Screen.height
     title: qsTr("FT Driver")
 
-    property string uid: "FTD"
-    property Item lastItem: trip
+    property string uid: "None"
+    property Item lastItem: null
 
     background: Rectangle {
         color: "#FFFFFF"
@@ -50,7 +50,7 @@ ApplicationWindow {
                 null
             }
             else {
-                stackView.pop()
+                stackView.clear()
                 stackView.push(trip)
                 trip.visible = true
                 sel = "a"
@@ -62,7 +62,7 @@ ApplicationWindow {
                 null
             }
             else {
-                stackView.pop()
+                stackView.clear()
                 stackView.push(history)
                 history.visible = true
                 sel = "b"
@@ -75,22 +75,18 @@ ApplicationWindow {
         id: stackView
         anchors.fill: parent
         initialItem: {
-            var date = new Date()
-            var now = Number(date.getTime()/1000)
-            var exp = Number(settings.value("expires", 0))
-            var sub = now - exp
-            if (sub < 0) {
+            var authen = settings.value("authenticate", false)
+            if (authen) {
                 stackView.initialItem = trip
                 splash.visible = false
                 trip.visible = true
                 topPanel.visible = true
                 bottomPanel.visible = true
-                backgroundTimer.running = true
                 console.log("Depth: ", stackView.depth)
             }
-            if (sub >= 0) {
+            else {
+                stackView.initialItem = splash
                 splashTimer.running = true
-                return splash
             }
         }
     }
@@ -111,19 +107,6 @@ ApplicationWindow {
         }
     }
 
-    Signup {
-        id: signup
-        visible: false
-        onLoginBtnClicked: {
-            stackView.pop()
-            visible = false
-            login.visible = true
-        }
-        onSignupBtnClicked: {
-            signupCom(nameText, emailText, passwordText)
-        }
-    }
-
     History {
         id: history
         visible: false
@@ -132,26 +115,26 @@ ApplicationWindow {
     Trip {
         id: trip
         visible: false
+        start.visible: settings.value("transit", true)
+        onStartBtnClicked: {
+            backgroundTimer.running = true
+            start.enabled = false
+            start.visible = false
+        }
     }
 
-    Login {
-        id: login
+    Auth {
+        id: auth
         visible: false
-        onLoginBtnClicked: {
-            loginCom(emailText, passwordText)
-        }
-        onSignupBtnClicked: {
-            if (stackView.depth === 1) {
-                stackView.push(signup)
-                visible = true
-                login.visible = false
-            }
-        }
+        onValidateBtnClicked: validateCom(authIdText, authKeyText)
     }
 
     Settings {
         id: settings
-        property string name: "None"
+        property string authId: "None"
+        property string authKey: "None"
+        property bool authenticate: false
+        property bool transit: false
     }
 
     PositionSource {
@@ -175,10 +158,21 @@ ApplicationWindow {
         running: false
         repeat: false
         onTriggered: {
-            stackView.replace(splash, login)
-            stackView.pop(splash)
-            splash.visible = false
-            login.visible = true
+            var authen = settings.value("authenticate", false)
+            if (authen) {
+                stackView.clear()
+                stackView.push(trip)
+                splash.visible = false
+                topPanel.visible = true
+                bottomPanel.visible = true
+                trip.visible = true
+            }
+            else {
+                stackView.clear()
+                stackView.push(auth)
+                splash.visible = false
+                auth.visible = true
+            }
         }
     }
 
@@ -192,39 +186,23 @@ ApplicationWindow {
         }
     }
 
-    function loginCom(par, val) {
-        request('http://dcraz8317.pythonanywhere.com/login?email='+par+'&password='+val+'&type=driver', function (o) {
-            // log the json response
-            var myJsonObject = JSON.parse(o.responseText)
-            console.log(myJsonObject.expires)
-            if (myJsonObject.status) {
-                settings.setValue("expires", myJsonObject.expires)
-                stackView.replace(login, trip)
-                stackView.pop(login)
-                stackView.initialItem = trip
-                login.visible = false
-                trip.visible = true
-                topPanel.visible = true
-                bottomPanel.visible = true
-                backgroundTimer.running = true
-            }
-        });
-    }
-
-    function signupCom(par, val, pas) {
-        request('http://dcraz8317.pythonanywhere.com/signupd?name='+par+'&email='+val+'&password='+pas, function (o) {
+    function validateCom(par, key){
+        request('http://dcraz8317.pythonanywhere.com/auth?uid='+par+'&key='+key, function (o) {
             // log the json response
             var myJsonObject = JSON.parse(o.responseText)
             console.log(myJsonObject.status)
             if (myJsonObject.status) {
-                settings.name = myJsonObject.id
-                settings.setValue(uid, settings.name)
-                signup.visible = false
-                stackView.pop()
-                login.visible = true
-                trip.visible = false
-                topPanel.visible = false
-                bottomPanel.visible = false
+                settings.authId = myJsonObject.id
+                settings.authKey = myJsonObject.key
+                settings.authenticate = myJsonObject.authenticate
+                settings.setValue("Auth ID", settings.authId)
+                settings.setValue("Auth KEY", settings.authKey)
+                settings.setValue("authenticate", settings.authenticate)
+                auth.visible = false
+                stackView.push(trip)
+                trip.visible = true
+                topPanel.visible = true
+                bottomPanel.visible = true
             }
         });
     }
@@ -245,6 +223,15 @@ ApplicationWindow {
                     history.modelA.append({"tripID": String(myJsonObject.trip[i]["pos"]), "destination": myJsonObject.trip[i]["destination"], "source": myJsonObject.trip[i]["source"], "pos": myJsonObject.trip[i]["pos"], "departure": myJsonObject.trip[i]["departure"], "arrival": myJsonObject.trip[i]["arrival"]})
                 }
                 history.modelA.layoutChanged()
+                if (!myJsonObject.transit) {
+                    backgroundTimer.running = false
+                    trip.start.enabled = true
+                    trip.start.visible = true
+                    settings.setValue("transit", true)
+                }
+                else {
+                    settings.setValue("transit", false)
+                }
             }
             if (myJsonObject.status) {
                 history.modelA.clear()
@@ -264,6 +251,15 @@ ApplicationWindow {
                     history.modelA.append({"tripID": String(myJsonObject.trip[l]["pos"]), "destination": myJsonObject.trip[l]["destination"], "source": myJsonObject.trip[l]["source"], "pos": myJsonObject.trip[l]["pos"], "departure": myJsonObject.trip[l]["departure"], "arrival": myJsonObject.trip[l]["arrival"]})
                 }
                 history.modelA.layoutChanged()
+                if (!myJsonObject.transit) {
+                    backgroundTimer.running = false
+                    trip.start.enabled = true
+                    trip.start.visible = true
+                    settings.setValue("transit", true)
+                }
+                else {
+                    settings.setValue("transit", false)
+                }
             }
         });
     }

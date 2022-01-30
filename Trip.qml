@@ -14,6 +14,9 @@ Page {
     property alias lapsedTValue: lapsedT.myValue
     property alias remainingDValue: remainingD.myValue
     property alias remainingTValue: remainingT.myValue
+    property alias start: button
+
+    signal startBtnClicked()
 
     background: Rectangle {
         color: "#E6E6FA"
@@ -82,10 +85,11 @@ Page {
         anchors.bottomMargin: parent.height * 0.05
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
+        onClicked: startBtnClicked()
 
         background: Rectangle {
-            implicitWidth: trip.width * 0.5
-            implicitHeight: trip.height * 0.125
+            implicitWidth: trip.width * 0.35
+            implicitHeight: trip.height * 0.1
             color: "#d8c0d8"
             radius: trip.height * 0.02
         }
@@ -97,7 +101,7 @@ Page {
             anchors.verticalCenter: parent.verticalCenter
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: Text.AlignHCenter
-            font.pixelSize: trip.height * 0.05
+            font.pixelSize: button.height * 0.35
             fontSizeMode: Text.Fit
             font.family: "Open Sans Regular"
         }
