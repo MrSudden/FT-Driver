@@ -208,7 +208,7 @@ ApplicationWindow {
     }
 
     function api(par, val, pas, uid) {
-        request('http://dcraz8317.pythonanywhere.com/api?lat='+par+'&lng='+val+'&spd='+pas+'&id='+uid, function (o) {
+        request('http://dcraz8317.pythonanywhere.com/api?lat='+par+'&lng='+val+'&spd='+pas+'&id='+settings.value("Auth ID", "None"), function (o) {
             // log the json response
             var myJsonObject = JSON.parse(o.responseText)
             console.log(myJsonObject.status)
